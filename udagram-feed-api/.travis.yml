@@ -1,0 +1,26 @@
+language: node_js
+node_js:
+  - 13
+
+services:
+  - docker
+
+
+# Pre-testing installs
+install:
+  - echo "nothing needs to be installed"
+
+# Scriptss to be run such as tests
+before_script:
+  - echo "no tests"
+
+script:
+  - docker --version # print the version for logging
+  - docker build -t udagram-feed-api .
+  - docker tag udagram-feed-api $DOCKER_USERNAME/udagram-feed-api:latest
+
+
+# Tasks to perform after the process is successful. Formatting the Docker username and password as below enables you to programmatically log in without having the password exposed in logs.
+after_success:
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - docker push $DOCKER_USERNAME/udagram-feed-api
