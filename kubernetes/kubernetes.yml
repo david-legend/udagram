@@ -1,0 +1,99 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: ceb-api 
+  name: ceb-api-service-prod 
+  namespace: dhis-mosip
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3000  
+    name: http
+    targetPort: 3000  
+    protocol: TCP
+  selector:
+    revision: prod_v1.0  
+    app: ceb-api 
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ceb-api-account 
+  namespace: dhis-mosip
+  labels:
+    app: ceb-api 
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    app: ceb-api 
+  name: ceb-api-deployment-prod 
+  namespace: dhis-mosip
+spec:
+  replicas: 1  
+  selector:
+    matchLabels:
+      revision: prod_v1.0  
+      app: ceb-api 
+  template:
+    metadata:
+      labels:
+        revision: prod_v1.0  
+        app: ceb-api 
+    spec:
+      serviceAccountName: ceb-api-account  
+      containers:  
+      - image: 160168652050.dkr.ecr.us-west-1.amazonaws.com/ceb-api:latest 
+        name: ceb-api-container  
+        ports:
+        - containerPort: 3000 
+        resources:
+          requests:
+            cpu: "100m"
+            memory: 300Mi
+          limits:
+            memory: 1Gi
+        
+        envFrom:
+        - secretRef:
+            name: ceb-api-secret-prod
+        imagePullPolicy: Always
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ceb-api-ingress
+  namespace: dhis-mosip
+  labels:
+    app: ceb-api 
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: ceb-api.mosipcmuafrica.me
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ceb-api
+            port:
+              number: 3000
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: ceb-api-secret-prod
+  namespace: dhis-mosip
+  labels:
+    app: ceb-api 
+stringData:
+  PORT: "3000"
+  JWT_SECRET_KEY: "cylabisthebestever"
+  MOSIP_MICROSERVICE_BASE: "http://ceb-mosip-service:3000"
+  AUTHENTICAION_MICROSERVICE_BASE_ROUTE: "http://ceb-authentication-microservice:3000"
+  EVENT_MICROSERVICE_BASE_ROUTE: "http://ceb-events-microservice:3000"
+  EMAIL_MICROSERVICE_BASE_ROUTE: "http://ceb-email-microservice:3000"
+type: Opaque

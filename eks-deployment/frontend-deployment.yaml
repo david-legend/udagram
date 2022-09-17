@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend-app
+  template:
+    metadata:
+      name: frontend-pod
+      labels:
+        app: frontend-app
+    spec:
+      containers:
+      - name: frontend-container
+        image: davidlegend/udagram-frontend:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+            
+
+
